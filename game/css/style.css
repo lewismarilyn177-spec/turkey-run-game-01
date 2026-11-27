@@ -1,16 +1,16 @@
-/* turkey-run: page chrome and stage sizing */
 html, body {
   margin: 0;
-  padding: 0;
   background: #2a1a0e;
-  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-family: "Trebuchet MS", sans-serif;
   color: #ffe9c9;
 }
+
 #stage-wrap {
-  position: relative;
   width: min(96vw, 960px);
   margin: 2vh auto;
+  position: relative;
 }
+
 #game-canvas {
   width: 100%;
   display: block;
@@ -18,13 +18,14 @@ html, body {
   box-shadow: 0 14px 40px rgba(0,0,0,.55), 0 0 0 3px #5a3a1e;
   background: #87b7e0;
 }
+
 #hint-bar {
   text-align: center;
   margin-top: 10px;
   font-size: 15px;
-  letter-spacing: .3px;
   opacity: .85;
 }
+
 .key {
   display: inline-block;
   background: #5a3a1e;
@@ -32,6 +33,5 @@ html, body {
   border-bottom-width: 3px;
   border-radius: 5px;
   padding: 1px 7px;
-  margin: 0 2px;
   font-size: 13px;
 }

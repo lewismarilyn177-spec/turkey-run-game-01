@@ -1,58 +1,126 @@
-// particles.js — shared particle pool (feathers, dust, sparks, leaves).
+// particles.js - shared particle pool (feathers, dust, sparks, leaves)
 
+const MAX_PARTICLES = 220;
 const pool = [];
+
+const GRAVITY = {
+  feather: 120,
+  leaf: 60,
+  spark: 340,
+  dust: 340
+};
+
+function createParticle() {
+  return {
+    x: 0, y: 0,
+    vx: 0, vy: 0,
+    life: 0,
+    kind: '',
+    age: 0,
+    rot: 0,
+    color: '#ffffff'
+  };
+}
+
+function getParticle() {
+  if (pool.length < MAX_PARTICLES) {
+    const p = createParticle();
+    pool.push(p);
+    return p;
+  }
+  return pool.find(p => p.age >= p.life) || pool[0];
+}
 
 export const particles = {
   spawn(p) {
-    if (pool.length < 220) pool.push({ ...p, age: 0 });
+    const particle = getParticle();
+    particle.x = p.x;
+    particle.y = p.y;
+    particle.vx = p.vx ?? 0;
+    particle.vy = p.vy ?? 0;
+    particle.life = p.life ?? 1;
+    particle.kind = p.kind ?? 'dust';
+    particle.age = 0;
+    particle.rot = p.rot ?? 0;
+    particle.color = p.color ?? '#ffffff';
+    return particle;
   },
 
   update(dt) {
-    for (let i = pool.length - 1; i >= 0; i--) {
+    for (let i = 0; i < pool.length; i++) {
       const p = pool[i];
+      if (p.age >= p.life) continue;
+
       p.age += dt;
+      if (p.age >= p.life) continue;
+
+      const g = GRAVITY[p.kind] ?? 0;
+      p.vy += g * dt;
+
+      if (p.kind === 'feather') {
+        p.vx *= 0.97;
+      }
+
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      p.vy += (p.kind === 'feather' ? 120 : p.kind === 'leaf' ? 60 : 340) * dt;
-      if (p.kind === 'feather') p.vx *= 0.97;
-      if (p.age >= p.life) pool.splice(i, 1);
     }
   },
 
   draw(ctx, camX) {
-    for (const p of pool) {
-      const a = 1 - p.age / p.life;
-      ctx.save();
-      ctx.globalAlpha = a * 0.9;
+    for (let i = 0; i < pool.length; i++) {
+      const p = pool[i];
+      if (p.age >= p.life) continue;
+
       const sx = p.x - camX;
-      if (p.kind === 'feather') {
-        ctx.translate(sx, p.y);
-        ctx.rotate(p.rot + p.age * 3);
-        ctx.fillStyle = '#f2d9b8';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 9, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (p.kind === 'leaf') {
-        ctx.translate(sx, p.y);
-        ctx.rotate(p.rot + p.age * 4);
-        ctx.fillStyle = p.color || '#d8741f';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 7, 3.5, 0.6, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (p.kind === 'spark') {
-        ctx.fillStyle = p.color || '#ffb140';
-        ctx.beginPath();
-        ctx.arc(sx, p.y, 3 + a * 3, 0, Math.PI * 2);
-        ctx.fill();
-      } else { // dust
-        ctx.fillStyle = 'rgba(214,194,160,0.8)';
-        ctx.beginPath();
-        ctx.arc(sx, p.y, 5 + p.age * 6, 0, Math.PI * 2);
-        ctx.fill();
+      const sy = p.y;
+      const t = 1 - p.age / p.life;
+      ctx.globalAlpha = t * 0.9;
+
+      switch (p.kind) {
+        case 'feather': {
+          ctx.fillStyle = '#f2d9b8';
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.rotate(p.rot);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 4.5, 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          break;
+        }
+        case 'leaf': {
+          ctx.fillStyle = p.color;
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.rotate(p.rot);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 3.5, 1.75, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          break;
+        }
+        case 'spark': {
+          ctx.fillStyle = '#ff8800';
+          const r = 3 + t * 3;
+          ctx.beginPath();
+          ctx.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        }
+        case 'dust': {
+          ctx.fillStyle = 'rgba(200, 180, 160, 0.6)';
+          const r = 1 + t * 4;
+          ctx.beginPath();
+          ctx.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        }
       }
-      ctx.restore();
     }
+    ctx.globalAlpha = 1;
   },
 
-  clear() { pool.length = 0; },
+  clear() {
+    pool.length = 0;
+  }
 };
